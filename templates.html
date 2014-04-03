@@ -305,3 +305,29 @@
     </div>
 
 </script>
+
+<script type="text/template" id="publishItemTemplate">
+    <div class="panel panel-primary publishItem" 
+        data-id="{{ id }}"
+        data-title="{{ title }}"
+        data-serviceName="{{ serviceName }}"
+        data-succeeded="false">
+        <div class="panel-heading">
+            <h2 class="panel-title">{{ title }}</h2>
+        </div>
+        <div class="panel-body">
+            <form role="form">
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="{{ id }}">Name of Service</label>
+                        <input type="text" class="form-control" id="name_{{ id }}" value="{{ serviceName }}" data-original="{{ url }}">
+                    </div>
+                </div>
+                <div class="pull-right">
+                    <button type="submit" class="btn" id="reset_{{ id }}">Reset</button>
+<!--                    <button type="submit" class="btn btn-primary" id="btnUpdateContentUrl">Update</button> -->
+                </div>
+            </form>
+        </div>
+    </div>
+</script>

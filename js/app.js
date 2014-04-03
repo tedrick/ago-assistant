@@ -162,6 +162,13 @@ require([
         updateContentUrls();
     });
 
+    // Add a listener for the "Select content for publishing" action.
+    jquery("li[data-action='selectContentForPublishing']").click(function () {
+        cleanUp();
+        jquery("#currentAction").html("<a>publish content</a>");
+        selectContentForPublishing();
+    });
+        
     var app = {
         user: {},
         stats: {
@@ -475,6 +482,77 @@ require([
 
     }
 
+    function selectContentForPublishing(){
+        var supportedContent = jquery(".content[data-type='Feature Collection']");
+        console.log(supportedContent);
+        supportedContent.addClass("btn-info");
+        supportedContent.removeClass("disabled");
+        var publishDiv = document.createElement("div");
+        
+        jquery('#dropArea').append("<div class='publishDiv'></div>");
+        jquery('.publishDiv').append("<button class='btn btn-block btn-warning btnPublish disabled'>Publish!</button>");
+        
+        //Add a listener for selection
+        jquery(".content").click(function() {
+                if (jquery(this).hasClass("btn-primary")) {
+                    jquery(this).removeClass("btn-primary");
+                    jquery(this).addClass("btn-info");
+                    jquery(this).addClass("active");
+                    jquery("#dropArea .panel[data-id='" + jquery(this).attr("id") + "']").remove();
+                    if (jquery(".publishItem").length < 1) {
+                        jquery('.btnPublish').addClass('disabled');
+                    }
+                } else {
+                    jquery(".content").removeClass("active");
+                    jquery(this).addClass("btn-primary");
+                    jquery(this).removeClass("btn-info");
+                    //Need to make data tag out of id and remove id
+                    var templateData = {
+                        id : jquery(this).attr("id"),
+                        title : jquery(this).text(),
+                        serviceName : jquery(this).text().replace(/\(.*\)/, "").replace(/\W+/g, "")
+                    }
+                    var html = mustache.to_html(jquery("#publishItemTemplate").html(), templateData);
+                    jquery('#dropArea .btnPublish').before(html);
+                    jquery('.btnPublish').removeClass('disabled');
+                }
+        });
+        
+        //Add a listener for publishing
+        jquery('.btnPublish').click(function(){
+            //post at sharing/rest/content/users/<username>/publish
+            var publishURL = sessionStorage.sourceUrl + "/sharing/rest/content/users/" + sessionStorage.sourceUsername + "/publish";
+            var args = jquery.param({
+                            'f': 'json',
+                            'token': sessionStorage.sourceToken
+                            });
+            jquery('.btnPublish').addClass('disabled');
+            var requests = [];
+            jquery('.publishItem').each(function(i, el){
+                var node = jquery(el);
+                console.log(el);
+                publishParams = {
+                   itemID : node.attr('data-id'),
+                   filetype : 'featurecollection', //look to parameterize in future
+                   publishParameters : JSON.stringify({
+                       "hasStaticData" :true,
+                       "name" : jquery('#name_' + node.attr('data-id')).attr("value"),
+                       "maxRecordCount" : 2000,
+                       "layerInfo":{"capabilities":"Query"}
+                   })
+                };
+                var thisReq = jquery.post(publishURL + "?" + args, publishParams, function(result){
+                    jquery(node.addClass('disabled').addClass('panel-success').removeClass('panel-primary'));
+                });
+                requests.push(thisReq);
+            });
+            jquery.when.apply(jquery, requests).done(function(){
+                jquery('.btnPublish').removeClass('disabled');
+            })
+        });
+        
+    }
+        
     function viewStats() {
         portal.user.profile(sessionStorage.sourceUrl, sessionStorage.sourceUsername, sessionStorage.sourceToken).done(function (user) {
 
